@@ -1,0 +1,52 @@
+spring:
+  application:
+    name: spring-ai-rag
+
+  mvc:
+    async:
+      request-timeout: 600000  # 设置为 60 秒，确保比业务代码的 30s 长
+
+  ai:
+    ollama:
+      # 远程 Ollama 地址
+      base-url: http://${CLOUD_IP}:11434
+      chat:
+        model: qwen2.5:0.5b
+        options:
+          temperature: 0.3      # 严谨模式，适合政策解读
+          top-p: 0.9           # 保持回答的连贯性
+          # num-predict: 512   # 限制输出长度，节省内存/响应时间
+      embedding:
+        model: bge-m3          # 维度必须是 1024
+    vectorstore:
+      milvus:
+        client:
+          host: ${CLOUD_IP}
+          port: 19530
+        # 即使你在 Java 代码里写死了，这里保留配置也是好习惯
+        collection-name: policy_docs
+        embedding-dimension: 1024
+        # database-name: default
+
+server:
+  port: 8081
+  # 增加 Servlet 超时时间，防止大模型生成太慢导致连接断开
+  tomcat:
+    connection-timeout: 60s
+
+logging:
+  file:
+    name: logs/rag-system.log
+  level:
+    # 1. 业务逻辑日志
+    com.wx.policyragsystem: DEBUG
+    # 2. Spring AI 核心日志（监控 Prompt 拼接）
+    org.springframework.ai: DEBUG
+    # 3. Milvus 交互日志（监控集合创建和检索过程）
+    io.milvus: DEBUG
+    # 4. 远程调用日志
+    org.springframework.web.client.RestTemplate: DEBUG
+    # 彻底关闭一些无关紧要的框架警告，保持控制台整洁
+    org.apache.catalina: INFO
+    org.apache.tomcat: INFO
+    org.apache.tika.parser.external.ExternalParser: INFO
