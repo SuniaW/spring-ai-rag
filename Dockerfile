@@ -1,4 +1,4 @@
-# --- 第一阶段：构建 (Build) ---
+# --- 第一阶段：编译 ---
 FROM maven:3.9.6-eclipse-temurin-21-alpine AS build
 WORKDIR /app
 
@@ -31,6 +31,7 @@ ENTRYPOINT ["java", \
             "-Xms160m", \
             "-XX:+UseSerialGC", \
             "-XX:MaxMetaspaceSize=64m", \
+            "-Xss256k", \
             "-XX:+ExitOnOutOfMemoryError", \
             "-Djava.security.egd=file:/dev/./urandom", \
             "-jar", "app.jar"]
