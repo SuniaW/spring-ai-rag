@@ -43,14 +43,14 @@ logging:
     name: logs/rag-system.log
   level:
     # 1. 业务逻辑日志
-    com.wx.policyragsystem: DEBUG
+    com.wx.policyragsystem: info
     # 2. Spring AI 核心日志（监控 Prompt 拼接）
-    org.springframework.ai: DEBUG
+    org.springframework.ai: info
     # 3. Milvus 交互日志（监控集合创建和检索过程）
-    io.milvus: DEBUG
+    io.milvus: info
     # 4. 远程调用日志
-    org.springframework.web.client.RestTemplate: DEBUG
+    org.springframework.web.client.RestTemplate: info
     # 彻底关闭一些无关紧要的框架警告，保持控制台整洁
-    org.apache.catalina: INFO
-    org.apache.tomcat: INFO
-    org.apache.tika.parser.external.ExternalParser: INFO
+    org.apache.catalina: info
+    org.apache.tomcat: info
+    org.apache.tika.parser.external.ExternalParser: info
