@@ -31,58 +31,45 @@ public class RagService {
 
     public RagService(ChatClient.Builder chatClientBuilder, VectorStore vectorStore) {
         this.vectorStore = vectorStore;
-        this.chatClient = chatClientBuilder
-            .defaultSystem(SYSTEM_PROMPT)
-            .defaultAdvisors(new MessageChatMemoryAdvisor(new InMemoryChatMemory()))
-            .build();
+        this.chatClient = chatClientBuilder.defaultSystem(SYSTEM_PROMPT)
+            .defaultAdvisors(new MessageChatMemoryAdvisor(new InMemoryChatMemory())).build();
     }
 
     public Flux<String> streamAnswer(String query, String chatId) {
+        log.info("RagService.streamAnswer() 开始检索 query:{} chatId:{}", query, chatId);
         long startTime = System.currentTimeMillis();
 
         // 2. 将阻塞的向量检索移至弹性线程池 (boundedElastic)，不占用请求主线程
         return Mono.fromCallable(() -> {
-                // 3. 检索调优：topK=2 或 3 是 2核服务器的极限平衡点。
-                // 减少召回片段能直接缩短大模型的 CPU 推理时间。
-                SearchRequest searchRequest = SearchRequest.builder()
-                    .query(query)
-                    .topK(2)
-                    .similarityThreshold(0.5) // 提高阈值至 0.5，过滤杂音，减少上下文长度
+            // 3. 检索调优：topK=2 或 3 是 2核服务器的极限平衡点。
+            // 减少召回片段能直接缩短大模型的 CPU 推理时间。
+            SearchRequest searchRequest =
+                SearchRequest.builder().query(query).topK(2).similarityThreshold(0.5) // 提高阈值至 0.5，过滤杂音，减少上下文长度
                     .build();
-                return vectorStore.similaritySearch(searchRequest);
-            })
-            .subscribeOn(Schedulers.boundedElastic())
-            .flatMapMany(docs -> {
-                log.info("检索耗时: {}ms", (System.currentTimeMillis() - startTime));
+            return vectorStore.similaritySearch(searchRequest);
+        }).subscribeOn(Schedulers.boundedElastic()).flatMapMany(docs -> {
+            log.info("RagService.streamAnswer() 检索耗时: {}ms", (System.currentTimeMillis() - startTime));
 
-                if (docs.isEmpty()) {
-                    return Flux.just("🔍 知识库中未找到相关内容。");
-                }
+            if (docs.isEmpty()) {
+                return Flux.just("🔍 知识库中未找到相关内容。");
+            }
 
-                // 4. 精简上下文拼接，减少 Token 消耗
-                String context = docs.stream()
-                    .map(Document::getText)
-                    .collect(Collectors.joining("\n"));
+            // 4. 精简上下文拼接，减少 Token 消耗
+            String context = docs.stream().map(Document::getText).collect(Collectors.joining("\n"));
 
-                String references = docs.stream()
-                    .map(d -> (String) d.getMetadata().getOrDefault("filename", "未知"))
-                    .distinct()
+            String references =
+                docs.stream().map(d -> (String)d.getMetadata().getOrDefault("filename", "未知")).distinct()
                     .collect(Collectors.joining(", "));
 
-                // 5. 调用流式生成
-                return chatClient.prompt()
-                    .user(u -> u.text("背景：{context}\n问题：{query}")
-                        .param("query", query)
-                        .param("context", context))
-                    .advisors(a -> a.param(MessageChatMemoryAdvisor.DEFAULT_CHAT_MEMORY_CONVERSATION_ID, chatId))
-                    .stream()
-                    .content()
-                    .concatWith(Flux.just("\n\n---\n> 📚 **参考来源：** " + references))
-                    .doOnComplete(() -> log.info("全流程总耗时: {}ms", (System.currentTimeMillis() - startTime)));
-            })
-            .onErrorResume(e -> {
-                log.error("RAG流程异常", e);
-                return Flux.just("⚠️ [系统繁忙] 处理请求超时，请稍后再试。");
-            });
+            // 5. 调用流式生成
+            return chatClient.prompt()
+                .user(u -> u.text("背景：{context}\n问题：{query}").param("query", query).param("context", context))
+                .advisors(a -> a.param(MessageChatMemoryAdvisor.DEFAULT_CHAT_MEMORY_CONVERSATION_ID, chatId)).stream()
+                .content().concatWith(Flux.just("\n\n---\n> 📚 **参考来源：** " + references)).doOnComplete(
+                    () -> log.info("RagService 全流程总耗时: {}ms", (System.currentTimeMillis() - startTime)));
+        }).onErrorResume(e -> {
+            log.error("RagService.streamAnswer() RAG流程异常", e);
+            return Flux.just("⚠️ [系统繁忙] 处理请求超时，请稍后再试。");
+        });
     }
 }

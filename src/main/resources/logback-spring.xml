@@ -64,6 +64,7 @@
 
     <!-- 6. 精细化包级别配置 -->
     <!-- 生产环境下，框架类日志一律用 INFO，业务类和关键 AI 流程可用 DEBUG（视排查需求而定） -->
+    <logger name="org.springframework.ai.chat.metadata" level="INFO" />
     <logger name="com.wx.rag" level="DEBUG" />          <!-- 业务代码 -->
     <logger name="org.springframework.ai" level="INFO" /> <!-- AI 框架：设为 INFO，否则会打印大量 Prompt 细节，撑爆日志 -->
     <logger name="io.milvus" level="INFO" />            <!-- Milvus 驱动 -->
