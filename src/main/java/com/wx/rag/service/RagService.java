@@ -66,7 +66,7 @@ public class RagService {
             return chatClient.prompt()
                 .user(u -> u.text("背景：{context}\n问题：{query}").param("query", query).param("context", context))
                 .advisors(a -> a.param(MessageChatMemoryAdvisor.DEFAULT_CHAT_MEMORY_CONVERSATION_ID, chatId)).stream()
-                .content().concatWith(Flux.just("\n\n---\n> 📚 **参考来源：** " + references)).doOnComplete(
+                .content().doOnComplete(
                     () -> log.info("RagService 全流程总耗时: {}ms", (System.currentTimeMillis() - startTime)));
         }).onErrorResume(e -> {
             log.error("RagService.streamAnswer() RAG流程异常", e);
