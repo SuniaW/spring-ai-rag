@@ -28,6 +28,12 @@ spring:
         collection-name: policy_docs
         embedding-dimension: 1024
         # database-name: default
+  servlet:
+    multipart:
+      # 单个文件的最大限制 (根据你的需求调整，例如 50MB)
+      max-file-size: 50MB
+      # 单个请求的总限制 (包含表单其他参数，建议比上面略大)
+      max-request-size: 60MB
 
 spring.datasource.hikari.maximum-pool-size: 5
 spring.datasource.hikari.minimum-idle: 2
