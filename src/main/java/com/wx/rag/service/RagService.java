@@ -5,6 +5,7 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.InMemoryChatMemory;
 import org.springframework.ai.document.Document;
+import org.springframework.ai.ollama.OllamaChatModel;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.stereotype.Service;
@@ -30,9 +31,9 @@ public class RagService {
         4. 资料未提及则告知不知道。
         """;
 
-    public RagService(ChatClient.Builder chatClientBuilder, VectorStore vectorStore) {
+    public RagService(OllamaChatModel ollamaChatModel, VectorStore vectorStore) {
         this.vectorStore = vectorStore;
-        this.chatClient = chatClientBuilder.defaultSystem(SYSTEM_PROMPT)
+        this.chatClient = ChatClient.builder(ollamaChatModel).defaultSystem(SYSTEM_PROMPT)
             .defaultAdvisors(new MessageChatMemoryAdvisor(new InMemoryChatMemory())).build();
     }
 
@@ -57,10 +58,6 @@ public class RagService {
 
             // 4. 精简上下文拼接，减少 Token 消耗
             String context = docs.stream().map(Document::getText).collect(Collectors.joining("\n"));
-
-            String references =
-                docs.stream().map(d -> (String)d.getMetadata().getOrDefault("filename", "未知")).distinct()
-                    .collect(Collectors.joining(", "));
 
             // 5. 调用流式生成
             return chatClient.prompt()

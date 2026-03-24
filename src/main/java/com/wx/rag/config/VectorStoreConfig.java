@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.ai.autoconfigure.vectorstore.milvus.MilvusVectorStoreProperties; // 你刚发给我的源码类
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.vectorstore.milvus.MilvusVectorStore;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,8 +22,8 @@ public class VectorStoreConfig {
 
     @Bean
     @Primary
-    public MilvusVectorStore vectorStore(MilvusServiceClient client, EmbeddingModel model,
-        MilvusVectorStoreProperties properties) {
+    public MilvusVectorStore vectorStore(MilvusServiceClient client,
+        @Qualifier("ollamaEmbeddingModel") EmbeddingModel model, MilvusVectorStoreProperties properties) {
 
         String collectionName = properties.getCollectionName();
 
