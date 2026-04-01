@@ -67,3 +67,4 @@ logging:
     org.apache.catalina: info
     org.apache.tomcat: info
     org.apache.tika.parser.external.ExternalParser: info
+amap.api.key: ${AMAP_API_KEY}

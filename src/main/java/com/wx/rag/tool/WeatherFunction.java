@@ -3,6 +3,7 @@ package com.wx.rag.tool;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Description;
@@ -23,7 +24,9 @@ public class WeatherFunction {
     private static final Logger LOGGER = LoggerFactory.getLogger(WeatherFunction.class);
 
     // 💡 生产环境请写在 application.yml 里
-    private static final String AMAP_API_KEY = "285f6303242efc6793a9236a14923fa9";
+    @Value("${amap.api.key}")
+    private String AMAP_API_KEY;
+
     private static final String AMAP_URL = "https://restapi.amap.com/v3/weather/weatherInfo";
 
     private final RestClient restClient = RestClient.builder()
